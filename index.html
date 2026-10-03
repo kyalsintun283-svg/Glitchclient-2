@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#111715">
+<title>Glitchclient — Cave Lab</title>
+<style>
+:root{color-scheme:dark;--ink:#edf4e9;--muted:#a3b0a2;--lime:#c8f46c;--panel:rgba(12,18,16,.86);--line:rgba(225,245,214,.16)}
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#111715;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}canvas{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}#vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 48%,rgba(3,7,6,.52) 100%);z-index:2}.grain{position:fixed;inset:0;pointer-events:none;z-index:2;opacity:.11;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E")}
+#topbar{position:fixed;z-index:4;top:18px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}.brand{display:flex;gap:11px;align-items:center;text-shadow:0 2px 18px #000}.brand-mark{width:34px;height:34px;border:1px solid #c8f46c;border-radius:9px;display:grid;place-items:center;color:#c8f46c;font-weight:900;font-size:17px;background:rgba(9,16,12,.65);box-shadow:0 0 25px rgba(200,244,108,.12)}.brand-name{font-weight:850;letter-spacing:.16em;font-size:11px}.brand-sub{font-size:10px;color:#a9b5a4;letter-spacing:.13em;margin-top:3px}.build-tag{border:1px solid var(--line);border-radius:99px;background:rgba(12,18,16,.58);padding:8px 11px;font-size:9px;letter-spacing:.13em;color:#d3e0ce}
+#hud{position:fixed;z-index:4;inset:0;pointer-events:none}.crosshair{position:absolute;left:50%;top:50%;width:17px;height:17px;transform:translate(-50%,-50%);opacity:.88}.crosshair:before,.crosshair:after{content:"";position:absolute;background:#f5ffe7;border-radius:3px;box-shadow:0 0 5px #182016}.crosshair:before{width:2px;height:16px;left:7.5px;top:.5px}.crosshair:after{height:2px;width:16px;top:7.5px;left:.5px}.readout{position:absolute;left:20px;bottom:20px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);backdrop-filter:blur(12px);min-width:190px}.readout-label{font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:#a6b3a1}.readout-value{font-size:12px;font-weight:700;margin-top:5px}.readout-value span{color:var(--lime)}#targetName{position:absolute;left:50%;top:calc(50% + 22px);transform:translateX(-50%);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#f3ffea;text-shadow:0 2px 8px #000;white-space:nowrap}.help{position:absolute;right:20px;bottom:20px;padding:11px 13px;background:var(--panel);border:1px solid var(--line);border-radius:12px;font-size:10px;color:#d8e3d3;line-height:1.8;text-align:right;backdrop-filter:blur(12px)}.key{display:inline-block;border:1px solid rgba(230,247,221,.27);border-radius:4px;padding:0 5px;color:#fff;background:rgba(255,255,255,.06);font-size:9px;margin-left:3px}
+#hotbar{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:5px;padding:6px;border:1px solid rgba(230,247,221,.2);border-radius:12px;background:rgba(11,16,14,.78);backdrop-filter:blur(10px);pointer-events:auto}.slot{width:57px;height:57px;border:1px solid rgba(255,255,255,.11);border-radius:7px;background:rgba(255,255,255,.035);position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#dbe5d7;cursor:pointer;transition:.15s}.slot.active{border-color:#d6ff84;background:rgba(190,238,107,.13);box-shadow:0 0 0 1px rgba(204,250,116,.35),0 0 16px rgba(194,245,100,.12)}.slot-key{position:absolute;top:4px;left:6px;font-size:8px;color:#98a397}.swatch{width:19px;height:19px;border:1px solid rgba(255,255,255,.3);border-radius:4px;box-shadow:inset -4px -4px rgba(0,0,0,.15)}.slot-name{font-size:8px;letter-spacing:.02em}.slot-count{position:absolute;right:5px;top:4px;font-size:9px;color:#fff;text-shadow:0 1px 3px #000}
+#toast{position:fixed;z-index:7;top:73px;left:50%;transform:translate(-50%,-8px);padding:9px 13px;border-radius:8px;border:1px solid var(--line);background:rgba(12,18,16,.88);font-size:11px;color:#e7f0e1;opacity:0;transition:.2s;pointer-events:none;white-space:nowrap}#toast.show{opacity:1;transform:translate(-50%,0)}
+#startPanel{position:fixed;z-index:5;inset:0;display:grid;place-items:center;background:linear-gradient(110deg,rgba(7,11,9,.75),rgba(7,11,9,.25) 68%,rgba(7,11,9,.48));transition:opacity .25s}.panel-card{width:min(440px,calc(100vw - 32px));padding:29px 29px 25px;border-radius:17px;border:1px solid rgba(225,245,214,.2);background:linear-gradient(145deg,rgba(17,25,21,.94),rgba(11,16,14,.92));box-shadow:0 30px 100px rgba(0,0,0,.42);backdrop-filter:blur(18px)}.eyebrow{font-size:9px;letter-spacing:.2em;color:#c8f46c;text-transform:uppercase;font-weight:800}.panel-card h1{font-size:clamp(28px,7vw,42px);line-height:1;margin:13px 0 10px;letter-spacing:-.05em}.panel-card h1 span{color:#c8f46c}.panel-card p{color:#b4c0b1;font-size:12px;line-height:1.7;margin:0 0 19px}.feature-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:21px}.pill{font-size:9px;letter-spacing:.04em;color:#dbe6d4;padding:6px 8px;border:1px solid rgba(231,246,222,.14);border-radius:99px;background:rgba(255,255,255,.035)}#startButton{width:100%;border:0;border-radius:9px;background:#c8f46c;color:#18200f;font-weight:850;letter-spacing:.12em;font-size:11px;padding:14px 16px;cursor:pointer;transition:.15s}#startButton:hover{background:#dbff91;transform:translateY(-1px)}.panel-foot{margin-top:13px!important;margin-bottom:0!important;text-align:center;font-size:9px!important;color:#869487!important}.hidden{display:none!important}
+#pauseHint{position:fixed;z-index:4;left:50%;top:18px;transform:translateX(-50%);font-size:9px;letter-spacing:.12em;color:#dce8d5;background:rgba(11,16,14,.55);padding:7px 9px;border-radius:99px;opacity:0;transition:.2s;pointer-events:none}body.playing #pauseHint{opacity:.8}
+@media(max-width:650px){#topbar{top:12px;left:12px;right:12px}.readout{left:10px;bottom:92px;min-width:0;padding:8px 10px}.help{display:none}#hotbar{bottom:10px;gap:3px;padding:4px}.slot{width:min(12vw,52px);height:51px}.slot-name{font-size:7px}.build-tag{font-size:8px;padding:7px 9px}.brand-sub{font-size:8px}#targetName{top:calc(50% + 18px)}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}</script>
+</head>
+<body>
+<div id="vignette"></div><div class="grain"></div>
+<header id="topbar"><div class="brand"><div class="brand-mark">G</div><div><div class="brand-name">GLITCHCLIENT</div><div class="brand-sub">CAVE LAB / 26.2 FEATURE STUDY</div></div></div><div class="build-tag">OFFLINE PROTOTYPE</div></header>
+<div id="hud"><div class="crosshair"></div><div id="targetName"></div><div class="readout"><div class="readout-label">Current biome</div><div class="readout-value"><span>◈</span> Sulfur Caverns</div></div><div id="hotbar"></div><div class="help"><div><span class="key">WASD</span> move &nbsp; <span class="key">SPACE</span> jump</div><div><span class="key">LMB</span> mine / shove &nbsp; <span class="key">RMB</span> place / absorb</div><div><span class="key">1–5</span> select &nbsp; <span class="key">X</span> shears</div></div></div>
+<div id="pauseHint">CLICK TO RESUME · ESC TO RELEASE MOUSE</div><div id="toast"></div>
+<div id="startPanel"><div class="panel-card"><div class="eyebrow">An original browser voxel prototype</div><h1>Into the <span>caves.</span></h1><p>Explore a sulfur-lit underground chamber, mine and place blocks, and see what happens when a curious cube absorbs one.</p><div class="feature-pills"><span class="pill">Sulfur cave</span><span class="pill">Cinnabar & sulfur blocks</span><span class="pill">Bouncy cube physics</span><span class="pill">First-person controls</span></div><button id="startButton">ENTER THE CAVE</button><p class="panel-foot">Desktop controls · Run with <b>python3 -m http.server 8000</b> in Codespaces and open port 8000.<br>Unofficial fan-made prototype; no Minecraft code, art, music, accounts, or multiplayer.</p></div></div>
+<script type="module">
+import * as THREE from 'three';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111715);
+scene.fog = new THREE.FogExp2(0x111715, 0.026);
+const camera = new THREE.PerspectiveCamera(76, innerWidth / innerHeight, 0.08, 90);
+camera.rotation.order = 'YXZ';
+camera.position.set(0, 2.12, 9);
+const renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+document.body.prepend(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xc5e6d1, 0x28221b, 2.15));
+const keyLight = new THREE.DirectionalLight(0xe4f3d5, 2.1);
+keyLight.position.set(-6, 12, 5);
+scene.add(keyLight);
+const sulfurGlow = new THREE.PointLight(0xd9ff73, 30, 20, 2);
+sulfurGlow.position.set(-4, 3.2, -3);
+scene.add(sulfurGlow);
+const redGlow = new THREE.PointLight(0xf07245, 19, 15, 2);
+redGlow.position.set(5, 2.3, 4);
+scene.add(redGlow);
+
+const materials = {
+  stone: new THREE.MeshStandardMaterial({color:0x626b62, roughness:0.96}),
+  sulfur: new THREE.MeshStandardMaterial({color:0xb9ba56, roughness:0.9}),
+  cinnabar: new THREE.MeshStandardMaterial({color:0xa85442, roughness:0.86}),
+  potent: new THREE.MeshStandardMaterial({color:0x98ad58, emissive:0x303c09, roughness:0.56}),
+  timber: new THREE.MeshStandardMaterial({color:0x806143, roughness:0.91})
+};
+const blockGeo = new THREE.BoxGeometry(1,1,1);
+const worldGroup = new THREE.Group(); scene.add(worldGroup);
+const decoGroup = new THREE.Group(); scene.add(decoGroup);
+const blockMap = new Map();
+const kOf = (x,y,z) => x + ',' + y + ',' + z;
+function putBlock(x,y,z,kind){ blockMap.set(kOf(x,y,z), {x,y,z,kind}); }
+function hash(x,y,z){const v=Math.sin(x*127.1+y*311.7+z*74.7)*43758.5453;return v-Math.floor(v);}
+
+for(let x=-13;x<=13;x++) for(let z=-13;z<=13;z++){
+  const n=hash(x,0,z);
+  let kind='stone';
+  if((x+6)*(x+6)+(z+4)*(z+4)<13 || (x-7)*(x-7)+(z-6)*(z-6)<10) kind='sulfur';
+  if((x-4)*(x-4)+(z+5)*(z+5)<7 || n>.965) kind='cinnabar';
+  if(n>.992) kind='potent';
+  putBlock(x,0,z,kind);
+}
+for(let y=1;y<=7;y++) for(let i=-14;i<=14;i++){
+  const kindA=hash(i,y,8)>.84?'cinnabar':(hash(i,y,1)>.7?'sulfur':'stone');
+  const kindB=hash(i,y,12)>.78?'sulfur':'stone';
+  putBlock(-14,y,i,kindA); putBlock(14,y,i,kindB);
+  putBlock(i,y,-14,hash(i,y,22)>.87?'cinnabar':'stone');
+  putBlock(i,y,14,hash(i,y,33)>.72?'sulfur':'stone');
+}
+function rebuildWorld(){
+  while(worldGroup.children.length) worldGroup.remove(worldGroup.children[0]);
+  const groups={};
+  for(const b of blockMap.values()){(groups[b.kind]||(groups[b.kind]=[])).push(b);}
+  const dummy=new THREE.Object3D();
+  for(const kind of Object.keys(groups)){
+    const voxels=groups[kind];
+    const mesh=new THREE.InstancedMesh(blockGeo,materials[kind],voxels.length);
+    mesh.userData.voxels=voxels;
+    for(let i=0;i<voxels.length;i++){
+      const b=voxels[i]; dummy.position.set(b.x,b.y,b.z); dummy.updateMatrix(); mesh.setMatrixAt(i,dummy.matrix);
+    }
+    mesh.instanceMatrix.needsUpdate=true; mesh.frustumCulled=false;
+    mesh.castShadow=true; mesh.receiveShadow=true;
+    worldGroup.add(mesh);
+  }
+}
+rebuildWorld();
+
+const spikeMat=new THREE.MeshStandardMaterial({color:0xd4c86a,roughness:.74,emissive:0x171404});
+const redSpikeMat=new THREE.MeshStandardMaterial({color:0xc46a4a,roughness:.74});
+const spikeGeo=new THREE.ConeGeometry(.35,1.55,6);
+for(const p of [[-9,-7],[-7,1],[-3,-8],[2,8],[8,3],[10,-7],[4,-10],[-10,7]]){
+  const spike=new THREE.Mesh(spikeGeo,hash(p[0],0,p[1])>.65?redSpikeMat:spikeMat);
+  spike.position.set(p[0],1.27,p[1]); decoGroup.add(spike);
+}
+for(const p of [[-6,-10],[7,10],[11,-1]]){
+  const spike=new THREE.Mesh(spikeGeo,spikeMat); spike.rotation.z=Math.PI;
+  spike.position.set(p[0],6.55,p[1]); decoGroup.add(spike);
+}
+const waterMat=new THREE.MeshStandardMaterial({color:0x79c5a5,emissive:0x164537,transparent:true,opacity:.68,roughness:.22,metalness:.08,side:THREE.DoubleSide});
+const poolGeo=new THREE.CircleGeometry(1.35,24);
+const pools=[{x:-5,z:4,last:0,duration:0},{x:6,z:-5,last:0,duration:0},{x:9,z:7,last:0,duration:0}];
+for(const p of pools){
+  const pool=new THREE.Mesh(poolGeo,waterMat); pool.rotation.x=-Math.PI/2; pool.position.set(p.x,.515,p.z); decoGroup.add(pool);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(1.38,.07,6,24),new THREE.MeshStandardMaterial({color:0xabae63,roughness:.8}));
+  rim.rotation.x=Math.PI/2; rim.position.set(p.x,.55,p.z); decoGroup.add(rim);
+  p.jet=new THREE.Mesh(new THREE.CylinderGeometry(.3,.19,1,9,1,true),new THREE.MeshBasicMaterial({color:0xa3f2d0,transparent:true,opacity:.55,depthWrite:false}));
+  p.jet.visible=false; decoGroup.add(p.jet);
+}
+
+const cube=new THREE.Group(); cube.position.set(2,.98,1.2); scene.add(cube);
+const cubeBody=new THREE.Mesh(new THREE.BoxGeometry(.9,.9,.9),new THREE.MeshStandardMaterial({color:0xbaf276,roughness:.3,metalness:.02,emissive:0x263d12}));
+cubeBody.userData.isCube=true; cube.add(cubeBody);
+const eyeMat=new THREE.MeshStandardMaterial({color:0x25331c,roughness:.5});
+for(const x of [-.2,.2]){const eye=new THREE.Mesh(new THREE.BoxGeometry(.09,.11,.045),eyeMat);eye.position.set(x,.12,-.463);cube.add(eye);}
+const absorbedBlock=new THREE.Mesh(new THREE.BoxGeometry(.32,.32,.32),materials.sulfur.clone());
+absorbedBlock.position.set(0,.52,0); absorbedBlock.visible=false; cube.add(absorbedBlock);
+let absorbedKind=null, cubeBounce=.56;
+let cubeVel=new THREE.Vector3(.7,0,-.3);
+
+const inventory=[
+  {kind:'sulfur',name:'Sulfur',color:'#b9ba56',count:18},
+  {kind:'cinnabar',name:'Cinnabar',color:'#a85442',count:14},
+  {kind:'stone',name:'Stone',color:'#626b62',count:24},
+  {kind:'potent',name:'Potent',color:'#98ad58',count:8},
+  {kind:'timber',name:'Wood',color:'#806143',count:12}
+];
+let selected=0;
+const hotbar=document.getElementById('hotbar');
+function paintHotbar(){
+  hotbar.innerHTML='';
+  inventory.forEach((item,i)=>{
+    const el=document.createElement('button'); el.className='slot'+(i===selected?' active':''); el.type='button';
+    el.innerHTML='<span class="slot-key">'+(i+1)+'</span><span class="swatch" style="background:'+item.color+'"></span><span class="slot-name">'+item.name+'</span><span class="slot-count">'+item.count+'</span>';
+    el.addEventListener('click',()=>{selected=i;paintHotbar();}); hotbar.appendChild(el);
+  });
+}
+paintHotbar();
+const toastEl=document.getElementById('toast'); let toastTimer;
+function toast(text){toastEl.textContent=text;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),1500);}
+
+const raycaster=new THREE.Raycaster(); raycaster.far=6;
+function targetAtCenter(){
+  raycaster.setFromCamera(new THREE.Vector2(0,0),camera);
+  const hits=raycaster.intersectObjects(worldGroup.children.concat([cube]),true);
+  if(!hits.length)return null;
+  const h=hits[0];
+  let node=h.object, onCube=false;
+  while(node){if(node===cube){onCube=true;break;}node=node.parent;}
+  if(onCube)return {type:'cube',hit:h};
+  const voxels=h.object.userData.voxels;
+  if(h.instanceId===undefined||!voxels)return null;
+  return {type:'block',hit:h,block:voxels[h.instanceId]};
+}
+const targetName=document.getElementById('targetName');
+let toastTarget='';
+function refreshTarget(){const t=targetAtCenter();const label=t?(t.type==='cube'?'Sulfur Cube':t.block.kind.replace('potent','Potent Sulfur')):'';targetName.textContent=label;}
+function mineBlock(b){
+  if(!b)return; blockMap.delete(kOf(b.x,b.y,b.z));
+  const item=inventory.find(v=>v.kind===b.kind); if(item)item.count++;
+  rebuildWorld();paintHotbar();toast('Collected '+b.kind+' block');
+}
+function interact(button){
+  const t=targetAtCenter(); if(!t){if(button===0)toast('Aim at a block or the cube');return;}
+  if(t.type==='cube'){
+    if(button===0){const dir=new THREE.Vector3(cube.position.x-camera.position.x,0,cube.position.z-camera.position.z).normalize();cubeVel.addScaledVector(dir,7);cubeVel.y=Math.max(cubeVel.y,3.8);toast('The cube skids away');}
+    else {const item=inventory[selected];if(item.count<1){toast('No '+item.name+' blocks left');return;}item.count--;absorbedKind=item.kind;cubeBounce=item.kind==='timber'?.86:(item.kind==='stone'?.34:(item.kind==='cinnabar'?.42:.62));cubeBody.material.color.set(item.color);cubeBody.material.emissive.set(item.kind==='potent'?0x37450d:0x1b2d0e);absorbedBlock.material.color.set(item.color);absorbedBlock.visible=true;paintHotbar();toast('Sulfur Cube absorbed '+item.name);}
+    return;
+  }
+  if(button===0){mineBlock(t.block);return;}
+  const n=t.hit.face?t.hit.face.normal:new THREE.Vector3(0,1,0);
+  const x=t.block.x+Math.round(n.x),y=t.block.y+Math.round(n.y),z=t.block.z+Math.round(n.z);
+  const item=inventory[selected];
+  if(item.count<1){toast('No '+item.name+' blocks left');return;}
+  if(blockMap.has(kOf(x,y,z))){toast('There is already a block there');return;}
+  const px=Math.round(camera.position.x),pz=Math.round(camera.position.z),feet=camera.position.y-1.62;
+  if(Math.abs(x-px)<=1&&Math.abs(z-pz)<=1&&y>=Math.floor(feet)&&y<=Math.floor(feet+1.7)){toast('Too close to place');return;}
+  putBlock(x,y,z,item.kind);item.count--;rebuildWorld();paintHotbar();toast('Placed '+item.name);
+}
+renderer.domElement.addEventListener('mousedown',e=>{if(document.pointerLockElement===renderer.domElement&&(e.button===0||e.button===2))interact(e.button);});
+renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
+
+const keys={}; let velocityY=0, grounded=false, started=false;
+let yaw=0,pitch=0;
+document.getElementById('startButton').addEventListener('click',()=>{
+  started=true;
+  if(renderer.domElement.requestPointerLock)renderer.domElement.requestPointerLock();
+  else toast('Pointer lock is not available in this browser');
+});
+document.addEventListener('pointerlockchange',()=>{
+  const locked=document.pointerLockElement===renderer.domElement;
+  document.body.classList.toggle('playing',locked);
+  document.getElementById('startPanel').classList.toggle('hidden',locked);
+  if(!locked&&started){document.getElementById('startButton').textContent='RESUME';}
+});
+document.addEventListener('mousemove',e=>{
+  if(document.pointerLockElement!==renderer.domElement)return;
+  yaw-=e.movementX*.0022; pitch-=e.movementY*.0022;
+  pitch=Math.max(-1.48,Math.min(1.48,pitch)); camera.rotation.set(pitch,yaw,0,'YXZ');
+});
+document.addEventListener('keydown',e=>{
+  keys[e.code]=true;
+  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)&&document.pointerLockElement===renderer.domElement)e.preventDefault();
+  if(/^Digit[1-5]$/.test(e.code)){selected=Number(e.code.slice(-1))-1;paintHotbar();}
+  if(e.code==='Space'&&grounded){velocityY=8.2;grounded=false;}
+  if(e.code==='KeyX'&&absorbedKind){const item=inventory.find(v=>v.kind===absorbedKind);if(item)item.count++;absorbedKind=null;absorbedBlock.visible=false;cubeBody.material.color.set(0xbaf276);cubeBounce=.56;paintHotbar();toast('Sheared the block out of the cube');}
+});
+document.addEventListener('keyup',e=>{keys[e.code]=false;});
+window.addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;});
+
+const clock=new THREE.Clock(); let elapsed=0;
+function blockedAt(px,feet,pz){
+  const minX=Math.floor(px-.25+.5),maxX=Math.floor(px+.25+.5),minZ=Math.floor(pz-.25+.5),maxZ=Math.floor(pz+.25+.5);
+  const minY=Math.floor(feet+.5),maxY=Math.floor(feet+1.72+.5);
+  for(let x=minX;x<=maxX;x++)for(let z=minZ;z<=maxZ;z++)for(let y=minY;y<=maxY;y++)if(blockMap.has(kOf(x,y,z)))return true;
+  return false;
+}
+function floorAt(px,pz){
+  let highest=-Infinity;
+  for(let x=Math.floor(px-.25+.5);x<=Math.floor(px+.25+.5);x++)for(let z=Math.floor(pz-.25+.5);z<=Math.floor(pz+.25+.5);z++){
+    for(let y=8;y>=-2;y--)if(blockMap.has(kOf(x,y,z))){const top=y+.5;if(top>highest)highest=top;break;}
+  }
+  return highest===-Infinity?null:highest;
+}
+function updatePlayer(dt){
+  if(document.pointerLockElement!==renderer.domElement)return;
+  const f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);
+  const s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
+  let mx=s*Math.cos(yaw)-f*Math.sin(yaw),mz=-s*Math.sin(yaw)-f*Math.cos(yaw);
+  const len=Math.hypot(mx,mz);if(len>0){mx/=len;mz/=len;}
+  const speed=keys.ShiftLeft?6.2:4.7;
+  const nx=camera.position.x+mx*speed*dt,nz=camera.position.z+mz*speed*dt,feet=camera.position.y-1.62;
+  if(!blockedAt(nx,feet,camera.position.z))camera.position.x=nx;
+  if(!blockedAt(camera.position.x,feet,nz))camera.position.z=nz;
+  const oldFoot=camera.position.y-1.62;velocityY-=22*dt;camera.position.y+=velocityY*dt;
+  const newFoot=camera.position.y-1.62,top=floorAt(camera.position.x,camera.position.z);
+  if(top!==null&&velocityY<=0&&newFoot<=top&&oldFoot>=top-.3){camera.position.y=top+1.62;velocityY=0;grounded=true;}else grounded=false;
+}
+function updateCube(dt,now){
+  cubeVel.y-=12*dt;
+  cube.position.x+=cubeVel.x*dt; cube.position.z+=cubeVel.z*dt;
+  if(Math.abs(cube.position.x)>12.15){cube.position.x=Math.sign(cube.position.x)*12.15;cubeVel.x*=-.72;}
+  if(Math.abs(cube.position.z)>12.15){cube.position.z=Math.sign(cube.position.z)*12.15;cubeVel.z*=-.72;}
+  cube.position.y+=cubeVel.y*dt;
+  const floor=floorAt(cube.position.x,cube.position.z);
+  if(floor!==null&&cube.position.y-.45<floor){cube.position.y=floor+.45;cubeVel.y=Math.abs(cubeVel.y)*cubeBounce;if(Math.abs(cubeVel.y)<.65)cubeVel.y=0;cubeVel.x*=.965;cubeVel.z*=.965;}
+  cube.rotation.y+=cubeVel.x*dt*.35;
+  cubeBody.scale.y=.94+Math.sin(now*3.3)*.035;
+  if(absorbedKind==='potent')cubeBody.material.emissiveIntensity=1.2+Math.sin(now*6)*.3;
+}
+function updateGeysers(dt,now){
+  for(const p of pools){
+    if(now-p.last>p.duration&&now-p.last>4.2+Math.abs(Math.sin(p.x*9+p.z))*2.4){p.last=now;p.duration=1.15;}
+    const active=now-p.last<p.duration&&p.duration>0;
+    p.jet.visible=active;
+    if(active){const t=(now-p.last)/p.duration;const h=.4+Math.sin(t*Math.PI)*2.2;p.jet.position.set(p.x,.55+h/2,p.z);p.jet.scale.y=h;if(Math.hypot(camera.position.x-p.x,camera.position.z-p.z)<1.4&&camera.position.y<4)velocityY=Math.max(velocityY,7.5);}
+  }
+}
+function animate(){
+  requestAnimationFrame(animate); const dt=Math.min(clock.getDelta(),.05);elapsed+=dt;
+  updatePlayer(dt);updateCube(dt,elapsed);updateGeysers(dt,elapsed);
+  sulfurGlow.intensity=27+Math.sin(elapsed*1.7)*3;redGlow.intensity=17+Math.sin(elapsed*1.2+1)*2;
+  if(Math.floor(elapsed*5)!==Math.floor((elapsed-dt)*5))refreshTarget();
+  renderer.render(scene,camera);
+}
+animate();
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+</script>
+</body>
+</html>
